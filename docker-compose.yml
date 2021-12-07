@@ -1,0 +1,32 @@
+version: '3.5'
+
+services:
+  mssql:
+    image: "mcr.microsoft.com/mssql/server:2019-latest"
+    container_name: "mssql"
+    ports:
+      - "1433:1433"
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=2wsx2WSX
+    restart: always
+    networks:
+      - pfr-network
+
+  pfr_app:
+    container_name: "pfr_app"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - ConnectionStrings__DefaultConnection=Data Source=mssql;Initial Catalog=PfrDocumentsService;User Id=sa;Password=2wsx2WSX;TrustServerCertificate=true
+    ports:
+      - "5050:8080"
+    depends_on:
+      - mssql
+    networks:
+      - pfr-network
+
+networks:
+  pfr-network:
+    name: pfr-network
