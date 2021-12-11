@@ -3,11 +3,12 @@ import {NgModule} from '@angular/core';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {HttpClientModule} from '@angular/common/http';
 import {RouterModule} from '@angular/router';
-//import { NgSelectModule } from '@ng-select/ng-select';
+import { NgSelectModule } from '@ng-select/ng-select';
 
 
 import {AppComponent} from './app.component';
 import {DocumentsComponent} from './documents/documents.component';
+import {BackendService} from "./services/backend.service";
 
 @NgModule({
   declarations: [
@@ -16,6 +17,7 @@ import {DocumentsComponent} from './documents/documents.component';
   ],
   imports: [
     BrowserModule,
+    NgSelectModule,
     HttpClientModule,
     FormsModule,
     RouterModule.forRoot([
@@ -23,7 +25,7 @@ import {DocumentsComponent} from './documents/documents.component';
     ]),
     ReactiveFormsModule
   ],
-  providers: [],
+  providers: [BackendService],
   bootstrap: [AppComponent]
 })
 export class AppModule {

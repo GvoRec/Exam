@@ -15,21 +15,24 @@ namespace PFR.ApplicationServices.Helpers
             _fileAsBytes = fileAsBytes;
         }
 
-        public AddEmployeeModel[] ParseEmployeesFromExcel()
+        public AddEmployeeModel[] ParseEmployeesFromExcel(out Guid organizationGuid)
         {
             using var stream = new MemoryStream(_fileAsBytes);
             using var workbook = new XLWorkbook(stream);
             var worksheet = workbook.Worksheets.First();
             var rowsCount = worksheet.Rows().Count();
             var result = new List<AddEmployeeModel>();
+            
+            var organizationId = Guid.Empty;
 
             for (var rowNumber = 2; rowNumber < rowsCount; rowNumber++)
             {
+                
                 var currentRow = worksheet.Row(rowNumber);
-                var guid = currentRow.Cell(1).Value.ToString();
-                var organizationId = Guid.Parse(guid);
                 var surname = currentRow.Cell(2).Value.ToString();
                 var name = currentRow.Cell(3).Value.ToString();
+                var guid = currentRow.Cell(1).Value.ToString();
+                organizationId = Guid.Parse(guid);
                 var patronomic = currentRow.Cell(4).Value.ToString();
                 var department = currentRow.Cell(5).Value.ToString();
                 var division = currentRow.Cell(6).Value.ToString();
@@ -37,7 +40,6 @@ namespace PFR.ApplicationServices.Helpers
                 var code = int.Parse(currentRow.Cell(8).Value.ToString());
                 result.Add(new AddEmployeeModel
                 {
-                    OrganizationId = organizationId,
                     Code = code,
                     Department = department,
                     Division = division,
@@ -48,6 +50,7 @@ namespace PFR.ApplicationServices.Helpers
                 });
             }
 
+            organizationGuid = organizationId;
             return result.ToArray();
         }
     }

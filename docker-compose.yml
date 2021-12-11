@@ -10,6 +10,10 @@ services:
       - ACCEPT_EULA=Y
       - SA_PASSWORD=2wsx2WSX
     restart: always
+#    volumes:
+#      - <local path>/data:/var/opt/mssql/data
+#      - <local path>/log:/var/opt/mssql/log
+#      - <local path>/secrets:/var/opt/mssql/secrets
     networks:
       - pfr-network
 

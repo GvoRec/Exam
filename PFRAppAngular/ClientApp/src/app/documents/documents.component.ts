@@ -1,23 +1,36 @@
-import {Component, Inject} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
+import {Component, Inject, OnInit} from '@angular/core';
 import {FormBuilder} from '@angular/forms';
-import {Observable} from "rxjs";
-import {map} from "rxjs/operators";
-import {saveAs} from 'file-saver';
+import {concat, Observable, of, Subject} from "rxjs";
+import {catchError, debounceTime, distinctUntilChanged, filter, map, switchMap, tap} from "rxjs/operators";
+
 import {DocumentModel} from "../models/documentModel";
 import {EmployeeModel} from "../models/employeeModel";
+import {BackendService} from "../services/backend.service";
+import {saveAs} from 'file-saver';
+import {OrganizationModel} from "../models/organizationModel";
 
 @Component({
   selector: 'app-documents',
   templateUrl: './documents.component.html'
 })
-export class DocumentsComponent {
-  public initialDocuments: DocumentModel[];
-  public initialUsers: EmployeeModel[];
-  public documents: DocumentModel[];
-  public empoyees: EmployeeModel[];
-  private baseUrl: string;
-  private selectedUserIdValue: number;
+export class DocumentsComponent implements OnInit {
+  minLengthTerm = 3;
+
+
+  //ng select organization
+  organizations$: Observable<OrganizationModel>;
+  loading = false;
+  organizationsInput$ = new Subject<string>();
+  selectedOrganization: OrganizationModel = null;
+
+  //ng select employee
+  employees: EmployeeModel[];
+  selectedEmployee: EmployeeModel = null;
+
+  //ng select document
+  documents$: Observable<DocumentModel>;
+  documentsInput$ = new Subject<string>();
+  selectedDocument: DocumentModel = null;
 
   documentForm = this.formBuilder.group({
     name: '',
@@ -29,81 +42,79 @@ export class DocumentsComponent {
     employeeId: '',
     placeholdersValue: ''
   });
+  private baseUrl: string;
+  private backendService: BackendService;
 
-  constructor(private http: HttpClient, @Inject('BASE_URL') baseUrl: string, private formBuilder: FormBuilder) {
+  constructor(private formBuilder: FormBuilder, backendService: BackendService,
+              @Inject('BASE_URL') baseUrl: string) {
     this.baseUrl = `${baseUrl}api`;
-    http.get<DocumentModel[]>(this.baseUrl + '/document/list').subscribe(result => {
-      this.initialDocuments = result;
-      this.documents = this.initialDocuments;
-    }, error => console.error(error));
-
-    http.get<EmployeeModel[]>(this.baseUrl + '/employee/list/aa90eb65-8ecf-4e34-0417-08d9b8e339ca').subscribe(result => {
-      this.initialUsers = result;
-      this.empoyees = this.initialUsers;
-    }, error => console.error(error));
+    this.backendService = backendService;
   }
 
-  public documentIdSelected(): boolean {
-    return !!this.generateDocumentForm.get('documentId').value;
+  ngOnInit() {
+    this.loadOrganizations();
+    // this.loadEmployees();
+    this.loadDocuments();
   }
 
-  public setUserSelected(): void {
-    this.selectedUserIdValue = <number>this.generateDocumentForm.get('employeeId').value;
-    if(!!this.selectedUserIdValue){
-      this.empoyees = this.initialUsers.filter(u => u.id == this.selectedUserIdValue);
-    }else{
-      this.generateDocumentForm.reset();
-      this.empoyees = this.initialUsers;
-    }
-
+  public loadOrganizations() {
+    this.organizations$ = this.observableShit<OrganizationModel>(this.organizationsInput$, 'organization');
   }
 
-  public filterDocuments(): void {
-    let selectedDocumentIdValue = <number>this.generateDocumentForm.get('documentId').value;
-    if (!!selectedDocumentIdValue) {
-      this.documents = this.initialDocuments.filter(doc => doc.id == selectedDocumentIdValue)
-      let document = this.documents[0];
-      let keyValuePairs = "";
+  public loadDocuments() {
+    this.documents$ = this.observableShit<DocumentModel>(this.documentsInput$, 'documents');
+  }
+
+  public getEmployees(): Observable<any> {
+    return this.backendService.getEmployees(this.selectedOrganization.id.toString(), '');
+  }
+
+  public buildDocumentPlaceholdersWithValues(employee: EmployeeModel, document: DocumentModel): void {
+    if (employee !== null && document !== null) {
       let documentPlaceholders = document.placeholders;
-      let selectedEmployee = this.empoyees.filter(e => e.id == this.selectedUserIdValue)[0];
-      for (let p in documentPlaceholders) {
-        let keyValuePair = `${document.placeholders[p]}:<value>;`
-        for (let key in selectedEmployee)
-        {
-          let docPlaceholder = document.placeholders[p];
-          if (docPlaceholder.toUpperCase() === key.toUpperCase()) {
-            let value = selectedEmployee[key];
-            keyValuePair = `${document.placeholders[p]}:${value};`
+      let filledPairs = [];
+
+      for (let documentPlaceholder of documentPlaceholders) {
+        let keyValuePair = `${documentPlaceholder}:<value>`
+        for (let personField in employee) {
+          if (personField.toUpperCase() === documentPlaceholder.toUpperCase()) {
+            keyValuePair = `${documentPlaceholder}:${employee[personField]}`
           }
         }
-        keyValuePairs += keyValuePair;
+        filledPairs.push(keyValuePair);
       }
+      let keyValuePairs = filledPairs.join(";");
+
       this.generateDocumentForm = this.formBuilder.group({
-        documentId: selectedDocumentIdValue,
+        documentId: document.id,
         placeholdersValue: keyValuePairs
       });
-    } else {
-      this.generateDocumentForm.reset();
-      this.documents = this.initialDocuments;
     }
   }
 
-  onSubmit(): void {
-    console.warn('Your order has been submitted', this.documentForm.value);
+  public onSubmit(): void {
     let name = this.documentForm.get('name').value;
     let placeholderValue = <string>(this.documentForm.get('placeholders').value);
     let placeholders = placeholderValue.split(",");
-    this.addDocument({name: name, placeholders: placeholders})
+    this.backendService.addDocument({name: name, placeholders: placeholders}).subscribe(res => {
+      this.backendService.getDocuments().subscribe(res => {
+        console.log('документ добавлен');
+      });
+    });
     this.documentForm.reset();
   }
 
-  generateDocument(): void {
-    let id = <number>this.generateDocumentForm.get('documentId').value;
-    let fileName = this.initialDocuments.filter(doc => doc.id == id)[0].name;
-    this.downloadFile(id)
+  public generateDocument(): void {
+    this.backendService.generateFile(this.selectedDocument.id, this.generateDocumentForm.get('placeholdersValue').value)
       .subscribe(
         success => {
-          saveAs(success, fileName);
+          this.generateDocumentForm.reset();
+          this.selectedOrganization = null;
+          this.selectedEmployee = null;
+          let documentName = this.selectedDocument.name;
+          this.selectedDocument = null;
+          saveAs(success, documentName);
+
         },
         err => {
           alert("Server error while downloading file.");
@@ -111,27 +122,39 @@ export class DocumentsComponent {
       );
   }
 
-  private addDocument(document: DocumentModel) {
-    this.http.post<DocumentModel>(this.baseUrl + '/document/add', document).subscribe(res => {
-      this.http.get<DocumentModel[]>(this.baseUrl + '/document/list').subscribe(result => {
-        this.documents = result;
-      }, error => console.error(error));
-    });
+  public trackByFn(item: any) {
+    return item.id;
   }
 
-  private downloadFile(id: number): Observable<any> {
-    let keyValuePairs = <string>this.generateDocumentForm.get('placeholdersValue').value;
-    let url = this.baseUrl + `/document/generate/${id}?placeholdersValues=${keyValuePairs}`
-    return this.http.get(url, {
-      responseType: 'blob',
-      observe: 'response'
-    })
-      .pipe(
-        map((res: any) => {
-          return new Blob([res.body], {type: 'docx'});
-        })
-      );
+  public valueSelected($event) {
+    this.buildDocumentPlaceholdersWithValues(this.selectedEmployee, this.selectedDocument);
+  }
 
+  public organizationSelected() {
+    this.backendService.getEmployees(this.selectedOrganization.id.toString()).subscribe(res =>
+      this.employees = res);
+  }
+
+  private observableShit<T>(inputString: Subject<string>, method: string): Observable<any> {
+    return concat(
+      of([]), // default items
+      inputString.pipe(
+        filter(res => {
+          return res !== null && res.length >= this.minLengthTerm
+        }),
+        distinctUntilChanged(),
+        debounceTime(300),
+        tap(() => this.loading = true),
+        switchMap(term => {
+          return this.backendService.choiceMethod(method, term).pipe(
+            catchError(() => of([])), // empty list on error
+            tap(() => {
+              this.loading = false;
+            })
+          )
+        })
+      )
+    );
   }
 }
 

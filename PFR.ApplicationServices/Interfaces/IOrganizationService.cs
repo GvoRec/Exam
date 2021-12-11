@@ -12,6 +12,8 @@ namespace PFR.ApplicationServices.Interfaces
 
         Task<OrganizationModel> GetOrganization(Guid orgId);
 
-        Task<List<OrganizationModel>> GetOrganizations();
+        Task<List<OrganizationModel>> GetOrganizations(string searchTerm);
+        
+        Task AddEmployee(Guid id, AddEmployeeModel model);
     }
 }

@@ -64,11 +64,11 @@ namespace PFR.ApplicationServices.Service
             return document;
         }
 
-        public async Task<DocumentModel[]> ListDocuments()
+        public async Task<DocumentModel[]> ListDocuments(string searchTerm)
         {
             var dbContext = _dbContextFactory.GetContext();
-            var documents = await dbContext.GetAllDocuments();
-            return documents.Select(doc => new DocumentModel()
+            var documents = await dbContext.GetAllDocuments(searchTerm);
+            return documents.Select(doc => new DocumentModel
             {
                 Id = doc.Id,
                 Name = doc.Name,

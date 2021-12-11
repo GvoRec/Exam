@@ -1,11 +1,7 @@
-using System;
-
 namespace PFR.Core.Models
 {
     public class AddEmployeeModel
     {
-        public Guid OrganizationId { get; set; }
-
         public string Surname { get; set; }
 
         public string Name { get; set; }

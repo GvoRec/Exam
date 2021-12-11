@@ -3,12 +3,11 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using PFR.ApplicationServices.Interfaces;
-using PFR.Core.Entity;
 using PFR.Core.Models;
 
 namespace PFRAppAngular.Controllers
 {
-    [Route("organization")]
+    [Route("api/organization")]
     [ApiController]
     public class OrganizationController : ControllerBase
     {
@@ -18,18 +17,23 @@ namespace PFRAppAngular.Controllers
         {
             _organizationService = organizationService;
         }
-        
-        [HttpGet("{id}")]
 
+        [HttpGet("{id}")]
         public async Task<OrganizationModel> GetOrganization(Guid id)
         {
             return await _organizationService.GetOrganization(id);
         }
-        
-        [HttpGet("get-all")]
-        public async Task<List<OrganizationModel>> GetOrganizations()
+
+        [HttpPost("{id}/add-employee")]
+        public async Task AddEmployee(Guid id, [FromBody] AddEmployeeModel model)
         {
-            return await _organizationService.GetOrganizations();
+            await _organizationService.AddEmployee(id, model);
+        }
+
+        [HttpGet("get-all")]
+        public async Task<List<OrganizationModel>> GetOrganizations(string searchTerm)
+        {
+            return await _organizationService.GetOrganizations(searchTerm);
         }
 
         [HttpPost("add")]

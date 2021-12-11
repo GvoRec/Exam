@@ -38,6 +38,7 @@
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
         <None Remove="templates\New_user_access_CS.docx" />
+        <Content Include="ClientApp\src\assets\favicon.ico" />
         <Content Include="templates\New_user_access_CS.docx">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
@@ -49,8 +50,7 @@
         <Content Include="templates\New_user_PED.docx">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
-        <None Include="ClientApp\src\app\documents\documentModel.ts" />
-        <None Include="ClientApp\src\app\models\documentModel.ts" />
+        <None Include="ClientApp\src\app\models\organizationModel.ts" />
     </ItemGroup>
 
     <ItemGroup>

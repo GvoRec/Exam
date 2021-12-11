@@ -7,8 +7,7 @@ namespace PFR.ApplicationServices.Interfaces
 {
     public interface IEmployeeService
     {
-        Task AddEmployee(AddEmployeeModel model);
-        Task AddEmployeeBatch(IEnumerable<AddEmployeeModel> model);
+        Task AddEmployeeBatch(Guid organizationGuid, IEnumerable<AddEmployeeModel> model);
         Task<List<EmployeeModel>> GetAllEmployees(Guid organizationId);
     }
 }   

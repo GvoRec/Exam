@@ -28,9 +28,9 @@ namespace PFRAppAngular.Controllers
         }
 
         [HttpGet("list")]
-        public async Task<DocumentModel[]> ListDocuments()
+        public async Task<DocumentModel[]> ListDocuments(string searchTerm)
         {
-            return await _documentService.ListDocuments();
+            return await _documentService.ListDocuments(searchTerm);
         }
 
         [HttpGet("generate/{documentId}")]

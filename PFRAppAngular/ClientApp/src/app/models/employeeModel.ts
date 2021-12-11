@@ -4,5 +4,5 @@ export interface EmployeeModel {
     divisionName: string;
     position: string;
     code: number;
-    fullName: string;
+    fullName: string
 }

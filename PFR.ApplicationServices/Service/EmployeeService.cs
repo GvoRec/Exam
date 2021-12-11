@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.VisualBasic;
 using PFR.ApplicationServices.Interfaces;
 using PFR.Core.Entity;
 using PFR.Core.Models;
@@ -19,16 +18,7 @@ namespace PFR.ApplicationServices.Service
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task AddEmployee(AddEmployeeModel model)
-        {
-            var entityEmployee = new Employee(model);
-            var dbContext = _dbContextFactory.GetContext();
-            var organization = await dbContext.GetOrganization(model.OrganizationId);
-            organization.AddEmployee(entityEmployee);
-            await dbContext.SaveChangesAsync();
-        }
-
-        public async Task AddEmployeeBatch(IEnumerable<AddEmployeeModel> model)
+        public async Task AddEmployeeBatch(Guid organizationGuid, IEnumerable<AddEmployeeModel> model)
         {
             var dbContext = _dbContextFactory.GetContext();
             var transaction = await dbContext.Database.BeginTransactionAsync();
@@ -37,7 +27,7 @@ namespace PFR.ApplicationServices.Service
                 foreach (var addEmployeeModel in model)
                 {
                     var entityEmployee = new Employee(addEmployeeModel);
-                    var organization = await dbContext.GetOrganization(addEmployeeModel.OrganizationId);
+                    var organization = await dbContext.GetOrganization(organizationGuid);
                     organization.AddEmployee(entityEmployee);
                 }
 

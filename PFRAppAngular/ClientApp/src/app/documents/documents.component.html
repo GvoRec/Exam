@@ -1,85 +1,135 @@
-<h1 id="tableLabel">Documents</h1>
+<h1 id="tableLabel">Добавление и генерация документов</h1>
 
-<p *ngIf="!documents"><em>Loading...</em></p>
+<p *ngIf="!documents$ | async"><em>Loading...</em></p>
 
-<p>Add document</p>
-
-<form [formGroup]="documentForm" (ngSubmit)="onSubmit()">
-  <div class="form-group">
-    <label for="name">Document name</label>
-    <input type="email" class="form-control" id="name" formControlName="name" aria-describedby="name" placeholder="Document name">
+<div class="btn-toolbar mt-5" role="toolbar" aria-label="Toolbar with button groups">
+  <div class="btn-group me-2" role="group" aria-label="First group">
+    <!-- Button trigger modal add document -->
+    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addDocumentModal">
+      Добавить новый документ
+    </button>
   </div>
-  <div class="form-group">
-    <label for="placeholders">Placeholders</label>
-    <input type="text" class="form-control" formControlName="placeholders" id="placeholders" placeholder="Password">
+  <div class="btn-group me-2" role="group" aria-label="Second group">
+    <!-- Button trigger modal generate document -->
+    <button type="button" class="btn btn-outline-success" data-bs-toggle="modal"
+            data-bs-target="#generateDocumentModal">
+      Сгенерировать документ
+    </button>
   </div>
-  <button type="submit" class="btn btn-primary">Add document</button>
-</form>
+</div>
 
 
-<p class="mt-5">Generate document</p>
-<form [formGroup]="generateDocumentForm" (ngSubmit)="generateDocument()" >
-  <div class="form-group">
-    <label for="employeeId">Employee id</label>
-    <input type="text" class="form-control" id="employeeId" (input)="setUserSelected()" formControlName="employeeId" aria-describedby="employeeId" placeholder="Employee Id">
-    <br>
-    <label for="documentId">Document id</label>
-    <input type="text" class="form-control" id="documentId" (input)="filterDocuments()" formControlName="documentId" aria-describedby="documentId" placeholder="Document Id">
-  </div>
-  <div *ngIf="documentIdSelected()">
-    <div class="form-group">
-      <label for="documentId">Document placeholders</label>
-      <input type="text" class="form-control" id="placeholdersValue" formControlName="placeholdersValue" aria-describedby="placeholdersValue" placeholder="Placeholders values">
+<!-- Modal -->
+<div class="modal fade" id="addDocumentModal" tabindex="-1" aria-labelledby="addDocumentModal" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Добавить документ</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form [formGroup]="documentForm" (ngSubmit)="onSubmit()">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="name">Название файла</label>
+            <input type="email" class="form-control" id="name" formControlName="name" aria-describedby="name"
+                   placeholder="Название файла">
+          </div>
+          <div class="form-group">
+            <label for="placeholders">Placeholders</label>
+            <input type="text" class="form-control" formControlName="placeholders" id="placeholders"
+                   placeholder="Placeholders, заполнение через запятую">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+          <button type="submit" class="btn btn-primary" data-bs-dismiss="modal">Добавить документ</button>
+        </div>
+      </form>
     </div>
-
   </div>
+</div>
 
-  <a (click)="generateDocument()" target="_blank" class="btn btn-primary">Generate document</a>
-</form>
 
-<div class="container">
-  <div class="row">
-    <div class="col">
-      <table class='table table-striped mt-3' aria-labelledby="tableLabel" *ngIf="empoyees">
-        <thead>
-        <tr>
-          <th>Id</th>
-          <th>Code</th>
-          <th>Full name</th>
-          <th>Department Name</th>
-          <th>Division Name</th>
-          <th>Position</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr *ngFor="let empoyee of empoyees">
-          <td>{{ empoyee.id }}</td>
-          <td>{{ empoyee.code }}</td>
-          <td>{{ empoyee.fullName }}</td>
-          <td>{{ empoyee.departmentName }}</td>
-          <td>{{ empoyee.divisionName }}</td>
-          <td>{{ empoyee.position }}</td>
-        </tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="col">
-      <table class='table table-striped mt-3' aria-labelledby="tableLabel" *ngIf="documents">
-        <thead>
-        <tr>
-          <th>Id</th>
-          <th>Name</th>
-          <th>Placeholders</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr *ngFor="let document of documents">
-          <td>{{ document.id }}</td>
-          <td>{{ document.name }}</td>
-          <td>{{ document.placeholders }}</td>
-        </tr>
-        </tbody>
-      </table>
+<!-- Modal -->
+<div class="modal fade" id="generateDocumentModal" tabindex="-1" aria-labelledby="generateDocumentModal"
+     aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel1">Генерация документа</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="container px-4">
+          <div class="row g-3">
+            <div class="col">
+              <ng-select
+                [items]="organizations$ | async"
+                [trackByFn]="trackByFn"
+                [minTermLength]="minLengthTerm"
+                [loading]="loading"
+                typeToSearchText="Please enter {{minLengthTerm}} or more characters" [typeahead]="organizationsInput$"
+                [(ngModel)]="selectedOrganization"
+                (change)="organizationSelected()"
+                placeholder="Выбрать организацию"
+                bindLabel="name">
+              </ng-select>
+            </div>
+          </div>
+          <div class="row g-3">
+            <div class="col" *ngIf="selectedOrganization !== null">
+              <ng-select
+                [items]="employees"
+                [trackByFn]="trackByFn"
+                [minTermLength]="minLengthTerm"
+                [(ngModel)]="selectedEmployee"
+                (change)="valueSelected($event)"
+                placeholder="Выбрать сотрудника"
+                bindLabel="fullName">
+                <ng-template ng-label-tmp let-item="item">
+                  {{item.code}} {{item.fullName}}
+                </ng-template>
+                <ng-template ng-option-tmp let-item="item" let-search="searchTerm">
+                  {{item.code}} {{item.fullName}}
+                </ng-template>
+              </ng-select>
+            </div>
+          </div>
+          <div class="row g-3">
+            <div class="col" *ngIf="selectedEmployee !== null">
+              <ng-select
+                [items]="documents$ | async"
+                bindLabel="Enter 3 symbols"
+                [trackByFn]="trackByFn"
+                [minTermLength]="minLengthTerm"
+                [loading]="loading"
+                typeToSearchText="Please enter {{minLengthTerm}} or more characters" [typeahead]="documentsInput$"
+                [(ngModel)]="selectedDocument"
+                (change)="valueSelected($event)"
+                placeholder="Выбрать документ"
+                bindLabel="name">
+              </ng-select>
+              <br>
+            </div>
+          </div>
+          <div class="row g-3" *ngIf="selectedDocument != null">
+            <div class="col">
+              <form [formGroup]="generateDocumentForm" (ngSubmit)="generateDocument()">
+                <div class="form-group">
+                  <label for="placeholdersValue">Заполнение документа</label>
+                  <textarea rows="8" type="text" class="form-control" id="placeholdersValue" formControlName="placeholdersValue"
+                            aria-describedby="placeholdersValue" placeholder="Placeholders values"></textarea>
+                </div>
+              </form>
+
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <a (click)="generateDocument()" target="_blank" data-bs-dismiss="modal" class="btn btn-primary">Generate document</a>
+      </div>
     </div>
   </div>
 </div>

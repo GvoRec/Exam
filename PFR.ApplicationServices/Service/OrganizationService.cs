@@ -25,10 +25,11 @@ namespace PFR.ApplicationServices.Service
             var organization = new Organization(organizationName);
             dbContext.Add(organization);
             await dbContext.SaveChangesAsync();
-            var organizations = await dbContext.GetOrganizations();
-            return organizations.Select(o => new OrganizationModel
+            var organizations = await dbContext.GetOrganizations(string.Empty);
+            return organizations.Where(o => o.Employees != null).Select(o => new OrganizationModel
             {
                 Id = o.Id,
+                Name = o.Name,
                 Employees = o.Employees.Select(employee => new EmployeeModel
                 {
                     Id = employee.Id,
@@ -48,19 +49,29 @@ namespace PFR.ApplicationServices.Service
             return new OrganizationModel
             {
                 Id = organization.Id,
+                Name = organization.Name,
                 Employees = organization.Employees.Select(EmployeeModel.MapEntity).ToList()
             } ;
         }
 
-        public async Task<List<OrganizationModel>> GetOrganizations()
+        public async Task<List<OrganizationModel>> GetOrganizations(string searchTerm)
         {
             var dbContext = _dbContextFactory.GetContext();
-            var organizations = await dbContext.GetOrganizations();
+            var organizations = await dbContext.GetOrganizations(searchTerm);
             return organizations.Select(organization => new OrganizationModel
             {
                 Id = organization.Id,
-                Employees = organization.Employees.Select(EmployeeModel.MapEntity).ToList()
+                Name = organization.Name
             }).ToList();
+        }
+
+        public async Task AddEmployee(Guid id, AddEmployeeModel model)
+        {
+            var entityEmployee = new Employee(model);
+            var dbContext = _dbContextFactory.GetContext();
+            var organization = await dbContext.GetOrganization(id);
+            organization.AddEmployee(entityEmployee);
+            await dbContext.SaveChangesAsync();
         }
     }
 }

@@ -13,7 +13,6 @@ FROM ${NODE_IMAGE} as node-build
 WORKDIR /src
 COPY PFRAppAngular/ClientApp .
 RUN npm install
-RUN npm rebuild node-sass
 RUN npm run build -- --prod
 
 FROM mcr.microsoft.com/dotnet/aspnet:5.0 AS base

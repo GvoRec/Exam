@@ -10,6 +10,6 @@ namespace PFR.ApplicationServices.Interfaces
 
         Task<Document> GenerateDocument(int documentId, string placeHoldersValues);
 
-        Task<DocumentModel[]> ListDocuments();
+        Task<DocumentModel[]> ListDocuments(string searchTerm);
     }
 }

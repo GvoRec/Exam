@@ -21,12 +21,6 @@ namespace PFRAppAngular.Controllers
             _employeeService = employeeService;
         }
 
-        [HttpPost("add")]
-        public void AddEmployee([FromBody] AddEmployeeModel model)
-        {
-            _employeeService.AddEmployee(model);
-        }
-
         [HttpGet("list/{organizationId}")]
         public async Task<List<EmployeeModel>> GetAllEmployees(Guid organizationId)
         {
@@ -40,8 +34,8 @@ namespace PFRAppAngular.Controllers
             await using var byteArrayFileStream = new MemoryStream();
             await fileAsStream.CopyToAsync(byteArrayFileStream);
             var parser = new XlsxParser(byteArrayFileStream.ToArray());
-            var employees = parser.ParseEmployeesFromExcel();
-            await _employeeService.AddEmployeeBatch(employees);
+            var employees = parser.ParseEmployeesFromExcel(out var organizationGuid);
+            await _employeeService.AddEmployeeBatch(organizationGuid, employees);
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using PFR.Core.Entity;
@@ -21,9 +22,10 @@ namespace PFR.Infrastructure.EntityFramework
             modelBuilder.HasDefaultSchema(DefaultSchemaName);
         }
 
-        public async Task<List<Organization>> GetOrganizations()
+        public async Task<List<Organization>> GetOrganizations(string searchTerm)
         {
-            return await Set<Organization>().Include(x => x.Employees).ToListAsync();
+            var searchedOrganizations = Set<Organization>().Where(o => o.Name.Contains(searchTerm));
+            return await searchedOrganizations.ToListAsync();
         }
 
         public Task<Organization> GetOrganization(Guid orgId)
@@ -34,13 +36,15 @@ namespace PFR.Infrastructure.EntityFramework
 
         public async Task<List<Employee>> GetEmployees(Guid organizationId)
         {
-            return (await Set<Organization>().Include(o => o.Employees).SingleAsync(o => o.Id == organizationId))
-                .Employees;
+            var employees = Set<Employee>().Where(e => 
+                e.OrganizationId == organizationId);
+            return await employees.ToListAsync();
         }
         
-        public async Task<List<Document>> GetAllDocuments()
+        public async Task<List<Document>> GetAllDocuments(string searchTerm)
         {
-            return await Set<Document>().ToListAsync();
+            var searchedDocuments = Set<Document>().Where(doc => doc.Name.Contains(searchTerm));
+            return await searchedDocuments.ToListAsync();
         }
 
         public async Task<Document> GetDocument(int documentId)
